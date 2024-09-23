@@ -2,14 +2,14 @@
 
 echo "[TASK]: Loading config..."
 
-unclean_output=$(<.vscode/settings.json)
-prepped_output="${unclean_output//[\s\{\}\" ]/""}"
+# Extracting deckip, deckport, and deckdir using grep, awk, and sed
+deck_ip=$(grep -o '"deckip"[^,}]*' .vscode/defsettings.json | awk -F'"' '{print $4}')
+deck_port=$(grep -o '"deckport"[^,}]*' .vscode/defsettings.json | awk -F'"' '{print $4}')
+deck_home_dir=$(grep -o '"deckdir"[^,}]*' .vscode/defsettings.json | awk -F'"' '{print $4}')/Desktop/dev-plugins/Shortcuts
 
-IFS=',:' read -r -a tmps <<< $prepped_output
-
-deck_ip="${tmps[1]}"
-deck_port="${tmps[3]}"
-deck_home_dir="${tmps[5]}/Desktop/dev-plugins/Shortcuts"
+echo "deck_ip: $deck_ip"
+echo "deck_port: $deck_port"
+echo "deck_home_dir: $deck_home_dir"
 
 echo "[INFO]: Loaded config"
 echo ""
@@ -19,6 +19,9 @@ function scpDirRecursive() {
   # $1 from dir
   # $2 to dir
   files=($(ls $1))
+
+  # Ensure destination directory exists
+  ssh -q deck@$deck_ip "[ -d $2 ] || mkdir -p $2"
 
   if ssh -q deck@$deck_ip "[ -d $2 ]"; then
     for file in "${files[@]}"; do
